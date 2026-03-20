@@ -112,8 +112,8 @@ def csv_append(data: dict):
                 line += "\n"
                 index += 1
                 file.write(line)
-    
-                
+
+                   
 def csv_overwrite(lines: list):
     """
     Overwrites data in the local csv file.
@@ -145,7 +145,20 @@ def csv_remove(rows: tuple):
             data = [lines[i] for i in range(len(lines)) if ((i not in rows) or (i == 0))]
             csv_overwrite(data)
             print(f"Removed lines {rows} from {CSV_FILE}")
-            
+     
+       
+def csv_count_rows() -> int:
+    """
+    Counts the amount of rows in the local csv file.
+    """
+    rows = 0
+    with open(CSV_FILE, mode='r') as file:
+        data = file.read()
+        for char in data:
+            if (char == "\n"): rows += 1
+    return rows    
+  
+     
 def csv_clear():
     """
     Clears all data in the local csv file.
@@ -154,7 +167,7 @@ def csv_clear():
         Writes or appends data to the local csv file.
     """
     if (file_exists(CSV_FILE)):
-        csv_overwrite([""])
+        csv_remove((1, csv_count_rows() - 1))
     
 
 

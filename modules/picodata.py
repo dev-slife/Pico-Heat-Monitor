@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/3/26
+Date Updated: 3/20/26
 Description: Builds and manages a csv file.
 """
 
@@ -84,13 +84,13 @@ def pico_available():
 
 def csv_append(data: dict):
     """
-    Appends data to a csv file.
+    Appends data to the local csv file.
     
     Args:
         data (dict) - the given data
     
     Side effects:
-        Writes or appends data to a csv file.
+        Writes or appends data to the local csv file.
     """
     if (file_exists(CSV_FILE)):
         with open(CSV_FILE, mode='a') as file:
@@ -116,10 +116,13 @@ def csv_append(data: dict):
                 
 def csv_overwrite(lines: list):
     """
-    Overwrites data in a csv file.
+    Overwrites data in the local csv file.
     
     Args:
         lines (list) - the lines to write to the file
+        
+    Side effects:
+        Writes or appends data to the local csv file.
     """
     with open(CSV_FILE, mode='w') as file:
         file.write("".join(lines))
@@ -127,10 +130,13 @@ def csv_overwrite(lines: list):
 
 def csv_remove(rows: tuple):
     """
-    Removes data from a csv file.
+    Removes data from the local csv file.
     
     Args:
         rows (tuple) - the row indices to remove
+        
+    Side effects:
+        Writes or appends data to the local csv file.
     """
     if (file_exists(CSV_FILE)):
         with open(CSV_FILE, mode='r') as file:
@@ -139,7 +145,17 @@ def csv_remove(rows: tuple):
             data = [lines[i] for i in range(len(lines)) if ((i not in rows) or (i == 0))]
             csv_overwrite(data)
             print(f"Removed lines {rows} from {CSV_FILE}")
-
+            
+def csv_clear():
+    """
+    Clears all data in the local csv file.
+    
+    Side effects:
+        Writes or appends data to the local csv file.
+    """
+    if (file_exists(CSV_FILE)):
+        csv_overwrite([""])
+    
 
 
 # ---------------------- DATA CONVERSION ---------------------- #
@@ -149,7 +165,7 @@ def serializeCSV():
     Converts {CSV_FILE} into a Python dictionary format.
         
     Return:
-        A dictionary representing {CSV_FILE}
+        A list of dictionaries representing {CSV_FILE}
     """
     if (file_exists(CSV_FILE)):
         payloads = []

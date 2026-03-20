@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/4/26
+Date Updated: 3/20/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
@@ -83,19 +83,6 @@ def show_screen(data: OrderedDict, curTime: str):
 
 # ------------------ READING + FORMATTING DATA ------------------ #
 
-def date_time() -> tuple:
-    """
-    Grabs the current time and date.
-    
-    Returns:
-        A tuple with the following:
-            - Index 1 = current time
-            - Index 2 = current date
-    """
-    curDateTime = localTime()
-    return get_time(curDateTime), get_date(curDateTime)
-
-
 def build_data() -> OrderedDict:
     """
     Builds a row of data from the temperature sensor.
@@ -112,7 +99,7 @@ def build_data() -> OrderedDict:
         - the room number the Pico is assigned in
     """
     # Date & Time
-    curTime, curDate = date_time()
+    curTime, curDate = get_time(), get_date()
     
     # Temperature & Humidity
     tempC = BME.read_temperature() / 100

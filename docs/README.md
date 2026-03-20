@@ -78,12 +78,12 @@ There are multiple different values which can be changed to your preference when
 ### Connecting To WiFi
 In order to have the Pico POST to a google form (or a preferred server), you need to be connected to the internet. Below are quick instructions to make sure your Raspberry Pi Pico can establish a connection.
 1. Set up your WiFi or grab a trusted SSID.
-2. Change `WIFI_SSD` to your WiFi SSD (name of the network)
+2. Change `WIFI_SSID` to your WiFi SSID (name of the network)
 3. Change `WIFI_PASSWORD` the password for your WiFi (leave blank if none)
 
 ### Connecting To A Google Form
-The pico will attempt to send it's data to a google form for every `UPDATE_THRESHOLD` that passes. If it fails to POST, than all data will be stored in, `PICO_DATA`, a local csv file. If you want to send data over to a google form, follow these steps:
-1. Make sure you have your WIFI configured ([see Connecting To WiFi](#connecting-to-wifi))
+The pico will attempt to send its data to a google form for every `UPDATE_THRESHOLD` that passes. If it fails to POST all data will be stored in, `PICO_DATA`, a local csv file. If you want to send data over to a google form, follow these steps:
+1. Make sure you have your WiFi configured ([see Connecting To WiFi](#connecting-to-wifi))
 2. Create a google form with the following entries (long answer text):
     - Unique ID
     - Assigned Room

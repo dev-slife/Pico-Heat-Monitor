@@ -17,6 +17,14 @@ PICO_NAME = "Pico<#1>"
 PICO_ROOM = "Room<#1>"
 
 
+# ------------------------- PIN CONFIG ------------------------- #
+
+BME_SDA_PIN = 4
+BME_SCL_PIN = 5
+OLED_SDA_PIN = 6
+OLED_SCL_PIN = 7
+
+
 # ------------------------- NETWORK CONFIG ------------------------- #
 
 WIFI_SSID = ""

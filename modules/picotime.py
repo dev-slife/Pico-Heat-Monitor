@@ -78,7 +78,6 @@ def local_inc_time(curTime: str, incType: str, amount: int=1):
                 m = 0
                 s = 0
         
-        
         # return values
         return f"{h:02d}:{m:02d}:{s:02d}"
     else:

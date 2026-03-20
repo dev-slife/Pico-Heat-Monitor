@@ -5,8 +5,7 @@ A Micropython program coded for the Raspberry Pi Pico 2W which tracks temperatur
 ## Installing Pico Heat Monitor
 
 ### Fetching The Drivers
-1. Go to the official [Raspberry Pi documentation](https://www.raspberrypi.com/documentation/microcontrollers/micropython.html) and follow the instructions to download the firmware for your specific Pico device.
-2. Download the BME280 + ssd1306 OLED Drivers from (will be documented soon...)
+Go to the official [Raspberry Pi documentation](https://www.raspberrypi.com/documentation/microcontrollers/micropython.html) and follow the instructions to download the firmware for your specific Pico device.
 
 ### Setting Up Pico For VSCode
 Skip this step if you have a different IDE you would prefer to use.
@@ -28,9 +27,11 @@ Skip this step if you have a different IDE you would prefer to use.
 ![Screenshot of Toggle Mpy FS button](../docs/images/Pico%20Toggle.png)
 ![Screenshot of Pico Workspace](../docs/images/Pico%20Workspace.png)
 7. Copy all files from this repo and move it into the Pico's workspace
-#### Extra Notes 
-- You can change the BME280 and OLED pins to your preference, just remember to also change them in [config.py](../modules/config.py)
-- For more information on Raspberry Pi Pico & VSCode see: *[Get started with Raspberry Pi Pico-series and VS Code](https://www.raspberrypi.com/news/get-started-with-raspberry-pi-pico-series-and-vs-code/)*
+> [!NOTE]
+> You can change the BME280 and OLED pins to your preference, just remember to also change them in [config.py](../modules/config.py) (see [configuration values](#configuration-values))
+
+> [!TIP]
+> For more information on Raspberry Pi Pico & VSCode see: *[Get started with Raspberry Pi Pico-series and VS Code](https://www.raspberrypi.com/news/get-started-with-raspberry-pi-pico-series-and-vs-code/)*
 
 ### Configuring Your Heat Monitor
 1. Open the [config.py](../modules/config.py) file and assign values to the following variables:
@@ -45,7 +46,9 @@ Skip this step if you have a different IDE you would prefer to use.
 You can run the Heat Monitor for your Raspberry Pi Pico 2W by either sending power straight to the Pico or by running the script through an IDE on your computer.
 
 ### Direct Power
-Find a power adapter to plug in your Pico 2W to a wall outlet. It is not recommended to plug the cable straight into a USB port that gives power, unless it is through a trusted device.
+Find a power adapter to plug in your Pico 2W to a wall outlet.
+> [!CAUTION]
+> It is not recommended to plug the cable straight into a USB port that gives power, unless it is through a trusted device.
 
 ### Using An IDE
 Plug in your Pico 2W to a USB port on your computer. Open up your preferred IDE and make sure that it recognizes your Pico. Run the [main.py](../main.py) file to run the whole program.
@@ -55,25 +58,31 @@ Plug in your Pico 2W to a USB port on your computer. Open up your preferred IDE 
 
 ### Notable Values
 There are multiple different values which can be changed to your preference when using Pico Heat Monitor (found in: [config.py](../modules/config.py)).
-- `CLOCK_SPEED`: The rate at which [main.py](../main.py) executes the `main()` function. Only impacts how the local time increments and is shown on the OLED screen
-- `UPDATE_THRESHOLD`: How often the Pico sends an HTTP request to the Google form and adds data to its local CSV file
-- `PICO_NAME`: The name of the Pico (used for building data)
-- `PICO_ROOM`: The room your Pico is in (used for building data)
-- `WIFI_SSD`: Your network SSID (WiFi name)
-- `WIFI_PASSWORD`: Your network password
-- `SERVER_URL`: The url for your google form (should end in /formResponse)
-- `FORM_MAP`: A dictionary mapping the entry ids for each prompt (entry.xxxxx)
+- SPEED CONFIG
+    - `CLOCK_SPEED`: The rate at which [main.py](../main.py) executes the `main()` function. Only impacts how the local time increments and is shown on the OLED screen
+    - `UPDATE_THRESHOLD`: How often the Pico sends an HTTP request to the Google form and adds data to its local CSV file
+- DEVICE INFO
+    - `PICO_NAME`: The name of the Pico (used for building data)
+    - `PICO_ROOM`: The room your Pico is in (used for building data)
+- PIN CONFIG
+    - `BME_SDA_PIN`: The GP number on the Raspberry Pi Pico for the BME280 SDA pin
+    - `BME_SCL_PIN`: The GP number on the Raspberry Pi Pico for the BME280 SCL pin
+    - `OLED_SDA_PIN`: The GP number on the Raspberry Pi Pico for the OLED SDA pin
+    - `OLED_SCL_PIN`: The GP number on the Raspberry Pi Pico for the OLED SCL pin
+- NETWORK CONFIG
+    - `WIFI_SSD`: Your network SSID (WiFi name)
+    - `WIFI_PASSWORD`: Your network password
+    - `SERVER_URL`: The url for your google form (should end in /formResponse)
+    - `FORM_MAP`: A dictionary mapping the entry ids for each prompt (entry.xxxxx)
 
 ### Connecting To WiFi
 In order to have the Pico POST to a google form (or a preferred server), you need to be connected to the internet. Below are quick instructions to make sure your Raspberry Pi Pico can establish a connection.
-
 1. Set up your WiFi or grab a trusted SSID.
 2. Change `WIFI_SSD` to your WiFi SSD (name of the network)
 3. Change `WIFI_PASSWORD` the password for your WiFi (leave blank if none)
 
 ### Connecting To A Google Form
 The pico will attempt to send it's data to a google form for every `UPDATE_THRESHOLD` that passes. If it fails to POST, than all data will be stored in, `PICO_DATA`, a local csv file. If you want to send data over to a google form, follow these steps:
-
 1. Make sure you have your WIFI configured ([see ]())
 2. Create a google form with the following entries (long answer text):
     - Unique ID
@@ -108,7 +117,6 @@ The pico will attempt to send it's data to a google form for every `UPDATE_THRES
 
 ## Notable Functions
 There are multiple key functions to keep in mind of which might help if you decide to make changes to the code.
-
 ### [picotime.py](../modules/picotime.py)
 - `local_inc_time()`: locally increments the time to prevent unecessary network requests
     - `curTime` (str) - The current time

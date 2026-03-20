@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/20/26
+Date Updated: 3/4/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
@@ -12,7 +12,15 @@ from machine import Pin, I2C
 from modules.picotime import *
 from modules.picodata import *
 from modules.piconet import http_send
-from modules.config import CLOCK_SPEED, UPDATE_THRESHOLD, PICO_NAME, PICO_ROOM
+from modules.config import \
+    CLOCK_SPEED, \
+    UPDATE_THRESHOLD, \
+    PICO_NAME, \
+    PICO_ROOM, \
+    BME_SDA_PIN, \
+    BME_SCL_PIN, \
+    OLED_SDA_PIN, \
+    OLED_SCL_PIN
 from time import sleep
 import modules.BME280 as BME280
 from modules.ssd1306 import SSD1306_I2C
@@ -21,9 +29,9 @@ from modules.ssd1306 import SSD1306_I2C
 # ---------------------- INITIALIZATION ---------------------- #
 
 # I2C communication.
-I2C_SENSOR = I2C(0, sda=Pin(4), scl=Pin(5), freq=400000)
+I2C_SENSOR = I2C(0, sda=Pin(BME_SDA_PIN), scl=Pin(BME_SCL_PIN), freq=400000)
 # I2C1 for OLED on GP6/GP7
-I2C_OLED = I2C(1, sda=Pin(6), scl=Pin(7), freq=400000)
+I2C_OLED = I2C(1, sda=Pin(OLED_SDA_PIN), scl=Pin(OLED_SCL_PIN), freq=400000)
 
 # OLED 128x32 init on I2C1
 WIDTH = 128

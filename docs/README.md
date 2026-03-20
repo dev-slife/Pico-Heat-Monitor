@@ -83,7 +83,7 @@ In order to have the Pico POST to a google form (or a preferred server), you nee
 
 ### Connecting To A Google Form
 The pico will attempt to send it's data to a google form for every `UPDATE_THRESHOLD` that passes. If it fails to POST, than all data will be stored in, `PICO_DATA`, a local csv file. If you want to send data over to a google form, follow these steps:
-1. Make sure you have your WIFI configured ([see ]())
+1. Make sure you have your WIFI configured ([see Connecting To WiFi](#connecting-to-wifi))
 2. Create a google form with the following entries (long answer text):
     - Unique ID
     - Assigned Room

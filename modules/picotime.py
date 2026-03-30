@@ -1,16 +1,14 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/20/26
+Date Updated: 3/30/26
 Description: Handles local time and date information.
 """
 
 
 # ---------------------- IMPORT MODULES ---------------------- #
 
-from .piconet import connect_wifi
-import ntptime
-import time
+from .piconet import connect_wifi, http_request
 
 
 # ------------------------ CONSTANTS ------------------------ #
@@ -32,11 +30,15 @@ WLAN = connect_wifi()
 def getLocalTime():
     """Grabs the local time."""
     try:
-        ntptime.settime()
+        response_json = http_request()
+        curDate = response_json["date"].split("-")
+        curTime = response_json["time"].split(":")
+        curTime[-1] = curTime[-1].split(".")[0]
+        dateTime = curDate + curTime
+        result = tuple([int(dt) for dt in dateTime])
+        return result
     except OSError as e:
         print(f"An {type(e).__name__} occurred: {e}")
-            
-    return time.localtime()
 
 
 
@@ -57,7 +59,9 @@ def local_inc_time(curTime: str, incType: str, amount: int=1):
     Returns:
         The new incremented time
     """
-    if (incType in ['h', 'm', 's']):
+    if (curTime == "Unknown"):
+        return "Unknown"
+    elif (incType in ['h', 'm', 's']):
         h, m, s, = map(int, curTime.split(":"))
         
         # increment
@@ -114,7 +118,11 @@ def format_MMDDYY(date=None, m=None, d=None, y=None):
     Returns:
         The date in the MM/DD/YY format
     """
-    if (date and isinstance(date, str)): m, d, y = date.split(" ")
+    if (date and date == "Unknown"):
+        return "Unknown"
+    elif (date and isinstance(date, str)):
+        m, d, y = date.split(" ")
+    
     if (m and d and y):
         return f"{MONTHS.index(m)}/{int(d):02d}/{str(y)[2:]}"
     else:
@@ -132,7 +140,8 @@ def get_date() -> str:
         A string representing the date.
     """
     localTime = getLocalTime()
-    return format_MonthDDYr(localTime[1], localTime[2], localTime[0])
+    print(localTime)
+    return "Unknown" if not localTime else format_MonthDDYr(localTime[1], localTime[2], localTime[0])
  
 
 def get_time() -> str:
@@ -157,4 +166,4 @@ def get_time() -> str:
     # Hours, Minutes, Seconds
     # subtract 5 from hours to convert from UTC to EST
     localTime = getLocalTime()
-    return f"{format(localTime[3] - 5)}:{format(localTime[4])}:{format(localTime[5])}"
+    return "Unknown" if not localTime else f"{format(localTime[3])}:{format(localTime[4])}:{format(localTime[5])}"

@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 3/4/26
+Date Updated: 3/30/26
 Description: Connects to the network and manages HTTP requests using REST.
 """
 
@@ -9,11 +9,15 @@ Description: Connects to the network and manages HTTP requests using REST.
 # ---------------------- IMPORT MODULES ---------------------- #
 
 import urequests
-from ujson import dumps
 import network
 import time
 import ubinascii
 from .config import WIFI_SSID, WIFI_PASSWORD, SERVER_URL, PICO_NAME
+
+
+# ------------------------ CONSTANTS ------------------------ #
+
+TIME_SERVER = "https://timeapi.io/api/v1/time/current/zone?timezone=America%2FNew_York"
 
 
 
@@ -59,7 +63,7 @@ def http_send(payload: dict, max_attempts=5):
         payload (dict) - the data to send
         max_attempts (int) - the amount of attempts it uses to POST
     """
-    for _ in range(max_attempts):
+    for i in range(max_attempts):
         try:
             headers = {
                 "Host": "docs.google.com",
@@ -71,8 +75,26 @@ def http_send(payload: dict, max_attempts=5):
             response.close()
             return True
         except Exception as e:
-            print(f"A(n) {type(e).__name__} occurred: {e}")
+            print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
     print("Failed to POST.")
+    return False
+
+
+def http_request(max_attempts=5):
+    """
+    Sends an HTTP GET request to timeapi.io for grabbing timezone data.
+    
+    Args:
+        max_attempts (int) - the amount of attempts it uses to GET
+    """
+    for i in range(max_attempts):
+        try:
+            response = urequests.get(TIME_SERVER, timeout=5)
+            print(f"HTTP Status: {response.status_code}")
+            return response.json()
+        except Exception as e:
+            print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
+    print("Failed to GET.")
     return False
 
 

@@ -58,9 +58,11 @@ Plug in your Pico 2W to a USB port on your computer. Open up your preferred IDE 
 
 ### Notable Values
 There are multiple different values which can be changed to your preference when using Pico Heat Monitor (found in: [config.py](../modules/config.py)).
-- SPEED CONFIG
+- HARDWARE CONFIG
     - `CLOCK_SPEED`: The rate at which [main.py](../main.py) executes the `main()` function. Only impacts how the local time increments and is shown on the OLED screen
     - `UPDATE_THRESHOLD`: How often the Pico sends an HTTP request to the Google form and adds data to its local CSV file
+    - `TEMP_OFFSET`: The amount of degrees (in Celsius) to offset the temperature by when calibrating your BME280
+    - `HUM_OFFSET`: The amount of relative humidity to offset by when calibrating your BME280
 - DEVICE INFO
     - `PICO_NAME`: The name of the Pico (used for building data)
     - `PICO_ROOM`: The room your Pico is in (used for building data)

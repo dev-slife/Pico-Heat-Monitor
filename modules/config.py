@@ -1,14 +1,16 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 3/4/26
+Date Updated: 3/31/26
 Description: Holds configuration values for Pico Heat Monitor.
 """
 
-# ------------------------- SPEED CONFIG ------------------------- #
+# ------------------------- HARDWARE CONFIG ------------------------- #
 
 CLOCK_SPEED = 1
 UPDATE_THRESHOLD = 60
+TEMP_OFFSET = 2
+HUM_OFFSET = 8
 
 
 # ------------------------- DEVICE INFO ------------------------- #

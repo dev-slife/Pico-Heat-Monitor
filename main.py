@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/20/26
+Date Updated: 3/31/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
@@ -20,7 +20,9 @@ from modules.config import \
     BME_SDA_PIN, \
     BME_SCL_PIN, \
     OLED_SDA_PIN, \
-    OLED_SCL_PIN
+    OLED_SCL_PIN, \
+    TEMP_OFFSET, \
+    HUM_OFFSET
 from time import sleep
 import modules.BME280 as BME280
 from modules.ssd1306 import SSD1306_I2C
@@ -112,9 +114,9 @@ def build_data() -> OrderedDict:
     # Temperature & Humidity
     tempC = BME.read_temperature() / 100
     tempRaw = C_to_F(tempC)
-    temp = C_to_F(tempC + 2)
+    temp = C_to_F(tempC + TEMP_OFFSET)
     humRaw = round(BME.read_humidity() / 1024)
-    hum = humRaw + 8
+    hum = humRaw + HUM_OFFSET
     
     return OrderedDict([
         ("Unique ID", PICO_NAME),

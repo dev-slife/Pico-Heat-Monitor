@@ -1,17 +1,17 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 3/30/26
+Date Updated: 3/31/26
 Description: Connects to the network and manages HTTP requests using REST.
 """
 
 
 # ---------------------- IMPORT MODULES ---------------------- #
 
+import ubinascii
 import urequests
 import network
 import time
-import ubinascii
 from .config import WIFI_SSID, WIFI_PASSWORD, SERVER_URL, PICO_NAME
 
 
@@ -21,11 +21,11 @@ TIME_SERVER = "https://timeapi.io/api/v1/time/current/zone?timezone=America%2FNe
 
 
 
-# ----------------------- CONNECT TO WIFI ----------------------- #
+# ----------------------- NETWORK FUNCTIONS ----------------------- #
 
 def connect_wifi():
     """
-    Connects the Pico 2W to the UMD IOT network.
+    Connects the Pico 2W to the network.
     
     Returns:
         the wlan object.
@@ -43,6 +43,16 @@ def connect_wifi():
     print("Network config:", wlan.ifconfig())
     return wlan
 
+
+def grab_MAC():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    return ubinascii.hexlify(wlan.config('mac'),':').decode()
+
+
+
+# ----------------------- HTTP FUNCTIONS ----------------------- #
+
 def url_encode(data: dict):
     """
     Encodes a given dictionary into a url format.
@@ -54,6 +64,7 @@ def url_encode(data: dict):
     for key, value in data.items():
         parts.append(f"{key}={str(value).replace(" ", "+")}")
     return "&".join(parts)
+
 
 def http_send(payload: dict, max_attempts=5):
     """
@@ -96,10 +107,3 @@ def http_request(max_attempts=5):
             print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
     print("Failed to GET.")
     return False
-
-
-# probably delete this later
-if __name__ == "__main__":
-    wlan = connect_wifi()
-    wlan.active(True)
-    print(ubinascii.hexlify(wlan.config('mac'),':').decode())

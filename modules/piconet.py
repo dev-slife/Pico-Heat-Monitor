@@ -116,7 +116,6 @@ def http_send(payload: dict, max_attempts=TIMEOUT_THRESHOLD):
                 return True
             except Exception as e:
                 err_reasons.add(f"{type(e).__name__}: {e}")
-                time.sleep(TIMEOUT_DELAY)
         print(f"Failed to POST, Given Errors: [{", ".join(err_reasons)}]")
     return False
 
@@ -137,6 +136,5 @@ def http_request(max_attempts=TIMEOUT_THRESHOLD):
                 return response.json()
             except Exception as e:
                 err_reasons.add(f"{type(e).__name__}: {e}")
-                time.sleep(TIMEOUT_DELAY)
         print(f"Failed to GET, Given Errors: [{", ".join(err_reasons)}]")
     return False

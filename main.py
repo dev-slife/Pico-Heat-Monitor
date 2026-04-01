@@ -159,9 +159,11 @@ def main():
     while True:
         try:
             if not has_wifi() and count >= (WIFI_DELAY * 60):
-                connect_wifi()
-            if count >= UPDATE_THRESHOLD:
                 count = 0
+                connect_wifi()
+            if count % UPDATE_THRESHOLD == 0:
+                # only reset count if there is a wifi connection
+                if has_wifi(): count = 0
                 reading = build_data()
                 curTime = reading["Time Recorded"]
                 display(reading)

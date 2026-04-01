@@ -93,7 +93,7 @@ def url_encode(data: dict):
     return "&".join(parts)
 
 
-def http_send(payload: dict, max_attempts=5):
+def http_send(payload: dict, max_attempts=TIMEOUT_THRESHOLD):
     """
     Sends an HTTP POST request to the Raspberry Pi Pico Data Collector form.
     
@@ -103,23 +103,25 @@ def http_send(payload: dict, max_attempts=5):
     """
     if (has_wifi()):
         for i in range(max_attempts):
+            err_reasons = set()
             try:
                 headers = {
                     "Host": "docs.google.com",
                     "User-Agent":  "RaspberryPi"+PICO_NAME,
                     "Content-Type": "application/x-www-form-urlencoded"
                 }
-                response = urequests.post(SERVER_URL, data=url_encode(payload), headers=headers, timeout=5)
+                response = urequests.post(SERVER_URL, data=url_encode(payload), headers=headers, timeout=TIMEOUT_DELAY)
                 print(f"HTTP Status: {response.status_code}")
                 response.close()
                 return True
             except Exception as e:
-                print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
-        print("Failed to POST.")
+                err_reasons.add(f"{type(e).__name__}: {e}")
+                time.sleep(TIMEOUT_DELAY)
+        print(f"Failed to POST, Given Errors: [{", ".join(err_reasons)}]")
     return False
 
 
-def http_request(max_attempts=5):
+def http_request(max_attempts=TIMEOUT_THRESHOLD):
     """
     Sends an HTTP GET request to timeapi.io for grabbing timezone data.
     
@@ -127,12 +129,14 @@ def http_request(max_attempts=5):
         max_attempts (int) - the amount of attempts it uses to GET
     """
     if (has_wifi()):
+        err_reasons = set()
         for i in range(max_attempts):
             try:
-                response = urequests.get(TIME_SERVER, timeout=5)
+                response = urequests.get(TIME_SERVER, timeout=TIMEOUT_DELAY)
                 print(f"HTTP Status: {response.status_code}")
                 return response.json()
             except Exception as e:
-                print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
-        print("Failed to GET.")
+                err_reasons.add(f"{type(e).__name__}: {e}")
+                time.sleep(TIMEOUT_DELAY)
+        print(f"Failed to GET, Given Errors: [{", ".join(err_reasons)}]")
     return False

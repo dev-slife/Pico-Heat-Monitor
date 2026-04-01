@@ -61,6 +61,9 @@ There are multiple different values which can be changed to your preference when
 - HARDWARE CONFIG
     - `CLOCK_SPEED`: The rate at which [main.py](../main.py) executes the `main()` function. Only impacts how the local time increments and is shown on the OLED screen
     - `UPDATE_THRESHOLD`: How often the Pico sends an HTTP request to the Google form and adds data to its local CSV file
+    - `TIMEOUT_THRESHOLD`: How many times a function attempts to make a network connection or request
+    - `TIMEOUT_DELAY`: The amount of seconds before attempting to reconnect or make a network request
+    - `WIFI_DELAY`: The amount of minutes before attempting to reconnect to WiFi if there isn't a connection
     - `TEMP_OFFSET`: The amount of degrees (in Celsius) to offset the temperature by when calibrating your BME280
     - `HUM_OFFSET`: The amount of relative humidity to offset by when calibrating your BME280
 - DEVICE INFO

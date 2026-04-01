@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/20/26
+Date Updated: 4/1/26
 Description: Builds and manages a csv file.
 """
 
@@ -41,13 +41,13 @@ def file_exists(filename: str) -> bool:
 
 def pico_storage():
     """
-    Grabs all storage data for the Raspberry Pi Pico 2W.
+    Grabs all storage data for the Raspberry Pi Pico.
     
     Returns:
         An OrderedDict of all storage statistics 
     """
-    # Get file system statistics
     try:
+        # Get file system statistics
         stat = os.statvfs('/')
         size_bytes = stat[1] * stat[2]
         free_bytes = stat[0] * stat[3]
@@ -150,6 +150,9 @@ def csv_remove(rows: tuple):
 def csv_count_rows() -> int:
     """
     Counts the amount of rows in the local csv file.
+    
+    Returns:
+        An integer representing the amount of rows.
     """
     rows = 0
     with open(CSV_FILE, mode='r') as file:

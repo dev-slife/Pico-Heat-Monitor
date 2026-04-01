@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 3/31/26
+Date Updated: 4/1/26
 Description: Holds configuration values for Pico Heat Monitor.
 """
 
@@ -9,6 +9,9 @@ Description: Holds configuration values for Pico Heat Monitor.
 
 CLOCK_SPEED = 1
 UPDATE_THRESHOLD = 60
+TIMEOUT_THRESHOLD = 5
+TIMEOUT_DELAY = 1
+WIFI_DELAY = 30
 TEMP_OFFSET = 2
 HUM_OFFSET = 8
 

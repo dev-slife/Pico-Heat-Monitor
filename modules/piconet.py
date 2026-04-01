@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 3/31/26
+Date Updated: 4/1/26
 Description: Connects to the network and manages HTTP requests using REST.
 """
 
@@ -12,39 +12,66 @@ import ubinascii
 import urequests
 import network
 import time
-from .config import WIFI_SSID, WIFI_PASSWORD, SERVER_URL, PICO_NAME
+from .config import \
+    WIFI_SSID, \
+    WIFI_PASSWORD, \
+    SERVER_URL, \
+    PICO_NAME, \
+    TIMEOUT_THRESHOLD, \
+    TIMEOUT_DELAY
 
 
 # ------------------------ CONSTANTS ------------------------ #
 
 TIME_SERVER = "https://timeapi.io/api/v1/time/current/zone?timezone=America%2FNew_York"
-
+WLAN = network.WLAN(network.STA_IF)
+WLAN.active(True)
 
 
 # ----------------------- NETWORK FUNCTIONS ----------------------- #
 
-def connect_wifi():
+def has_wifi():
     """
-    Connects the Pico 2W to the network.
+    Checks to see if the Pico is connected to WiFi.
     
     Returns:
-        the wlan object.
+        True if there is a wifi connection and False otherwise.
     """
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
+    return WLAN.isconnected()
+
+
+def disconnect_wifi():
+    """Disconnects the Pico from the network."""
+    WLAN.disconnect()
+    print(f"Disconnected from {WIFI_SSID}")
+
+
+def connect_wifi():
+    """Connects the Pico to the network."""
+    count = 0
     
-    if not wlan.isconnected():
-        print("Connecting to Wi-Fi...")
-        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    if not has_wifi():
+        print(f"Attempting to connect to {WIFI_SSID}...")
+        WLAN.connect(WIFI_SSID, WIFI_PASSWORD)
 
-        while not wlan.isconnected():
-            time.sleep(1)
-            
-    print("Network config:", wlan.ifconfig())
-    return wlan
-
+        while not has_wifi() and count < TIMEOUT_THRESHOLD:
+            time.sleep(TIMEOUT_DELAY)
+            count += 1
+    
+    if (has_wifi()):    
+        print("Network config:", WLAN.ifconfig())
+    else:
+        disconnect_wifi()
+        print(f"WARNING: Connection timed out, unable to connect to {WIFI_SSID}. Please make sure you have the correct SSID and password set.")
+    
 
 def grab_MAC():
+    """
+    Grabs the MAC address of the Raspberry Pi Pico.
+    
+    Returns:
+        A string representing the MAC address of the Pico.
+    """
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     return ubinascii.hexlify(wlan.config('mac'),':').decode()
@@ -74,20 +101,21 @@ def http_send(payload: dict, max_attempts=5):
         payload (dict) - the data to send
         max_attempts (int) - the amount of attempts it uses to POST
     """
-    for i in range(max_attempts):
-        try:
-            headers = {
-                "Host": "docs.google.com",
-                "User-Agent":  "RaspberryPi"+PICO_NAME,
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
-            response = urequests.post(SERVER_URL, data=url_encode(payload), headers=headers, timeout=5)
-            print(f"HTTP Status: {response.status_code}")
-            response.close()
-            return True
-        except Exception as e:
-            print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
-    print("Failed to POST.")
+    if (has_wifi()):
+        for i in range(max_attempts):
+            try:
+                headers = {
+                    "Host": "docs.google.com",
+                    "User-Agent":  "RaspberryPi"+PICO_NAME,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+                response = urequests.post(SERVER_URL, data=url_encode(payload), headers=headers, timeout=5)
+                print(f"HTTP Status: {response.status_code}")
+                response.close()
+                return True
+            except Exception as e:
+                print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
+        print("Failed to POST.")
     return False
 
 
@@ -98,12 +126,13 @@ def http_request(max_attempts=5):
     Args:
         max_attempts (int) - the amount of attempts it uses to GET
     """
-    for i in range(max_attempts):
-        try:
-            response = urequests.get(TIME_SERVER, timeout=5)
-            print(f"HTTP Status: {response.status_code}")
-            return response.json()
-        except Exception as e:
-            print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
-    print("Failed to GET.")
+    if (has_wifi()):
+        for i in range(max_attempts):
+            try:
+                response = urequests.get(TIME_SERVER, timeout=5)
+                print(f"HTTP Status: {response.status_code}")
+                return response.json()
+            except Exception as e:
+                print(f"[{i}] A(n) {type(e).__name__} occurred: {e}")
+        print("Failed to GET.")
     return False

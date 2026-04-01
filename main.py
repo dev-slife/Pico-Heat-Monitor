@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/31/26
+Date Updated: 4/1/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
@@ -11,10 +11,11 @@ Description: Monitors the Temperature and Humidity Levels of a room.
 from machine import Pin, I2C
 from modules.picotime import *
 from modules.picodata import *
-from modules.piconet import http_send
+from modules.piconet import http_send, connect_wifi, has_wifi
 from modules.config import \
     CLOCK_SPEED, \
     UPDATE_THRESHOLD, \
+    WIFI_DELAY, \
     PICO_NAME, \
     PICO_ROOM, \
     BME_SDA_PIN, \
@@ -99,7 +100,7 @@ def build_data() -> OrderedDict:
     
     Returns:
         A dictionary containing the following:
-        - unique id of the Raspberry Pi Pico 2W
+        - unique id of the Raspberry Pi Pico
         - time recorded (str)
         - date recorded (str)
         - temperature in Fahrenheit (float)
@@ -153,9 +154,12 @@ def display(data: dict):
 # ------------------------- MAIN CODE ------------------------- #
 
 def main():
+    connect_wifi()
     count = UPDATE_THRESHOLD
     while True:
         try:
+            if not has_wifi() and count >= (WIFI_DELAY * 60):
+                connect_wifi()
             if count >= UPDATE_THRESHOLD:
                 count = 0
                 reading = build_data()
@@ -168,7 +172,6 @@ def main():
                 if (serializedData):
                     for payload in serializedData:
                         # successful POSTS means we can remove local data
-                        print(payload[0])
                         if http_send(payload[0]): linesToRemove.append(payload[1])
                     if (linesToRemove):
                         csv_remove(tuple(linesToRemove))

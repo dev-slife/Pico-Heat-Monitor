@@ -1,14 +1,14 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 3/30/26
+Date Updated: 4/1/26
 Description: Handles local time and date information.
 """
 
 
 # ---------------------- IMPORT MODULES ---------------------- #
 
-from .piconet import connect_wifi, http_request
+from .piconet import http_request
 
 
 # ------------------------ CONSTANTS ------------------------ #
@@ -20,9 +20,6 @@ MONTHS = [
     "September", "October", "November", "December"
 ]
 
-# Connect to WiFi
-WLAN = connect_wifi()
-
 
 
 # ----------------------- GRAB LOCAL TIME ----------------------- #
@@ -31,12 +28,13 @@ def getLocalTime():
     """Grabs the local time."""
     try:
         response_json = http_request()
-        curDate = response_json["date"].split("-")
-        curTime = response_json["time"].split(":")
-        curTime[-1] = curTime[-1].split(".")[0]
-        dateTime = curDate + curTime
-        result = tuple([int(dt) for dt in dateTime])
-        return result
+        if response_json:
+            curDate = response_json["date"].split("-")
+            curTime = response_json["time"].split(":")
+            curTime[-1] = curTime[-1].split(".")[0]
+            dateTime = curDate + curTime
+            result = tuple([int(dt) for dt in dateTime])
+            return result
     except OSError as e:
         print(f"An {type(e).__name__} occurred: {e}")
 
@@ -140,7 +138,6 @@ def get_date() -> str:
         A string representing the date.
     """
     localTime = getLocalTime()
-    print(localTime)
     return "Unknown" if not localTime else format_MonthDDYr(localTime[1], localTime[2], localTime[0])
  
 

@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 4/1/26
+Date Updated: 4/14/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
@@ -76,10 +76,15 @@ def show_screen(data: OrderedDict, curTime: str):
     """
     # clear screen
     OLED.fill(0)
+    
+    dateSplit = data["Date Recorded"].split("/")
+    Y = dateSplit[0]
+    M = dateSplit[1]
+    D = dateSplit[2]
 
     buffer = [
         f"F: {data["Temperature"]} H: {data["Humidity"]}%",
-        f"Date: {format_MMDDYY(date=data["Date Recorded"])}",
+        f"Date: {M}/{D}/{Y}",
         f"Time: {curTime}"
     ]
 
@@ -103,6 +108,11 @@ def build_data() -> OrderedDict:
         - unique id of the Raspberry Pi Pico
         - time recorded (str)
         - date recorded (str)
+        - hour recorded (str)
+        - minute recorded (str)
+        - day recorded (str)
+        - year recorded (str)
+        - month recorded (str)
         - temperature in Fahrenheit (float)
         - calibrated temperature in Fahrenheit (float)
         - humidity level (float)
@@ -111,6 +121,13 @@ def build_data() -> OrderedDict:
     """
     # Date & Time
     curTime, curDate = get_time(), get_date()
+    curTimeSplit = curTime.split(":")
+    curDateSplit = curDate.split("/")
+    curHour = curTimeSplit[0]
+    curMin = curTimeSplit[1]
+    curYear = curDateSplit[0]
+    curMon = curDateSplit[1]
+    curDay = curDateSplit[2]
     
     # Temperature & Humidity
     tempC = BME.read_temperature() / 100
@@ -124,6 +141,11 @@ def build_data() -> OrderedDict:
         ("Assigned Room", PICO_ROOM),
         ("Time Recorded", curTime),
         ("Date Recorded", curDate),
+        ("Hour Recorded", curHour),
+        ("Minute Recorded", curMin),
+        ("Year Recorded", curYear),
+        ("Month Recorded", curMon),
+        ("Day Recorded", curDay),
         ("Raw Temperature", tempRaw),
         ("Temperature", temp),
         ("Raw Humidity", humRaw),

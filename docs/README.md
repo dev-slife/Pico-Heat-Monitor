@@ -78,7 +78,13 @@ There are multiple different values which can be changed to your preference when
     - `WIFI_SSD`: Your network SSID (WiFi name)
     - `WIFI_PASSWORD`: Your network password
     - `SERVER_URL`: The url for your google form (should end in /formResponse)
+    - `CSV_FILE`: The local csv file that stores all data locally on the Pico
     - `FORM_MAP`: A dictionary mapping the entry ids for each prompt (entry.xxxxx)
+        - Some values are optional and depend on how you make the google form.
+        - If you use short answer format, use `Time Recorded` and `Date Recorded`
+        - For date format, use `Year Recorded`, `Month Recorded`, and `Day Recorded`
+        - For time format, use `Hour Recorded` and `Minute Recorded`
+        - leave mappings you don't use blank, so the pico knows to ignore that data when sending it to the google form
 
 ### Connecting To WiFi
 In order to have the Pico POST to a google form (or a preferred server), you need to be connected to the internet. Below are quick instructions to make sure your Raspberry Pi Pico can establish a connection.

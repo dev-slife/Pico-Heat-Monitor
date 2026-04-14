@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 4/1/26
+Date Updated: 4/14/26
 Description: Handles local time and date information.
 """
 
@@ -138,7 +138,7 @@ def get_date() -> str:
         A string representing the date.
     """
     localTime = getLocalTime()
-    return "Unknown" if not localTime else format_MonthDDYr(localTime[1], localTime[2], localTime[0])
+    return "Unknown" if not localTime else f"{localTime[0]}/{localTime[1]}/{localTime[2]}"
  
 
 def get_time() -> str:

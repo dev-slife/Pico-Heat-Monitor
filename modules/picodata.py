@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 4/1/26
+Date Updated: 4/14/26
 Description: Builds and manages a csv file.
 """
 
@@ -10,13 +10,15 @@ Description: Builds and manages a csv file.
 
 import os
 from collections import OrderedDict
-from modules.config import FORM_MAP
+from modules.config import FORM_MAP, CSV_FILE
 
 
 # ------------------------ CONSTANTS ------------------------ #
 
-# CSV file name
-CSV_FILE = "PICO_DATA.csv"
+OPTIONAL_KEYS = (
+    "Time Recorded", "Date Recorded", "Hour Recorded", "Minute Recorded",
+    "Year Recorded", "Month Recorded", "Day Recorded"
+)
 
 
 
@@ -185,19 +187,29 @@ def serializeCSV():
     """
     if (file_exists(CSV_FILE)):
         payloads = []
+        skipped = []
         data = OrderedDict()
         parse = ""
         keys = True
         i = 0
+        offset = 0
         line = 0
         with open(CSV_FILE, mode='r') as file:
             for char in file.read():
                 if (char == "," or char == "\n"):
                     if (keys):
+                        # skip empty data points
+                        if ((not bool(FORM_MAP.get(parse))) and (parse in OPTIONAL_KEYS)):
+                            skipped.append(i)
+                            i += 1
+                            offset += 1
+                            parse = ""
+                            continue
                         if (char == "\n"): keys = False
                         data[FORM_MAP[parse]] = ""
-                    else:
-                        data[list(data.keys())[i]] = parse
+                    elif (i not in skipped):
+                        index = i-offset if len(skipped) > 0 and i > skipped[-1] else i
+                        data[list(data.keys())[index]] = parse
                         if (char == "\n"):
                             payloads.append((data.copy(), line))
                     if (char == "\n"):

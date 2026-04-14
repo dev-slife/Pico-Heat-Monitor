@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 4/1/26
+Date Updated: 4/14/26
 Description: Holds configuration values for Pico Heat Monitor.
 """
 
@@ -35,11 +35,17 @@ OLED_SCL_PIN = 7
 WIFI_SSID = ""
 WIFI_PASSWORD = ""
 SERVER_URL = ""
+CSV_FILE = "PICO_DATA.csv"
 FORM_MAP = {
     "Unique ID": "",
     "Assigned Room": "",
     "Time Recorded": "",
     "Date Recorded": "",
+    "Hour Recorded": "",
+    "Minute Recorded": "",
+    "Year Recorded": "",
+    "Month Recorded": "",
+    "Day Recorded": "",
     "Raw Temperature": "",
     "Temperature": "",
     "Raw Humidity": "",

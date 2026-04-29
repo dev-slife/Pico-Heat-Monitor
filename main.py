@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/18/26
-Date Updated: 4/14/26
+Date Updated: 4/29/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
@@ -12,18 +12,19 @@ from machine import Pin, I2C
 from modules.picotime import *
 from modules.picodata import *
 from modules.piconet import http_send, connect_wifi, has_wifi
-from modules.config import \
-    CLOCK_SPEED, \
-    UPDATE_THRESHOLD, \
-    WIFI_DELAY, \
-    PICO_NAME, \
-    PICO_ROOM, \
-    BME_SDA_PIN, \
-    BME_SCL_PIN, \
-    OLED_SDA_PIN, \
-    OLED_SCL_PIN, \
-    TEMP_OFFSET, \
+from modules.config import (
+    CLOCK_SPEED,
+    UPDATE_THRESHOLD,
+    WIFI_DELAY,
+    PICO_NAME,
+    PICO_ROOM,
+    BME_SDA_PIN,
+    BME_SCL_PIN,
+    OLED_SDA_PIN,
+    OLED_SCL_PIN,
+    TEMP_OFFSET,
     HUM_OFFSET
+)
 from time import sleep
 import modules.BME280 as BME280
 from modules.ssd1306 import SSD1306_I2C
@@ -77,17 +78,21 @@ def show_screen(data: OrderedDict, curTime: str):
     # clear screen
     OLED.fill(0)
     
-    dateSplit = data["Date Recorded"].split("/")
-    Y = dateSplit[0]
-    M = dateSplit[1]
-    D = dateSplit[2]
+    dateRecorded = data["Date Recorded"]
+    
+    if (dateRecorded != "Unknown"):
+        dateSplit = dateRecorded.split("/")
+        Y = dateSplit[0]
+        M = dateSplit[1]
+        D = dateSplit[2]      
+        dateRecorded = f"{M}/{D}/{Y}"
 
     buffer = [
         f"F: {data["Temperature"]} H: {data["Humidity"]}%",
-        f"Date: {M}/{D}/{Y}",
+        f"Date: {dateRecorded}",
         f"Time: {curTime}"
     ]
-
+    
     for i in range(len(buffer)):
         line = buffer[i]
         OLED.text(line, 0, 12*i)
@@ -121,8 +126,8 @@ def build_data() -> OrderedDict:
     """
     # Date & Time
     curTime, curDate = get_time(), get_date()
-    curTimeSplit = curTime.split(":")
-    curDateSplit = curDate.split("/")
+    curTimeSplit = curTime.split(":") if (curTime != "Unknown") else ["Unknown", "Unknown"]
+    curDateSplit = curDate.split("/") if (curDate != "Unknown") else ["Unknown", "Unknown", "Unknown"]
     curHour = curTimeSplit[0]
     curMin = curTimeSplit[1]
     curYear = curDateSplit[0]

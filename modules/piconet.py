@@ -1,7 +1,7 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 4/1/26
+Date Updated: 4/29/26
 Description: Connects to the network and manages HTTP requests using REST.
 """
 
@@ -12,13 +12,14 @@ import ubinascii
 import urequests
 import network
 import time
-from .config import \
-    WIFI_SSID, \
-    WIFI_PASSWORD, \
-    SERVER_URL, \
-    PICO_NAME, \
-    TIMEOUT_THRESHOLD, \
+from .config import (
+    WIFI_SSID,
+    WIFI_PASSWORD,
+    SERVER_URL,
+    PICO_NAME,
+    TIMEOUT_THRESHOLD,
     TIMEOUT_DELAY
+)
 
 
 # ------------------------ CONSTANTS ------------------------ #

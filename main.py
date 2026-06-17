@@ -191,9 +191,10 @@ def monitor(clock=PicoClock(), count=UPDATE_THRESHOLD):
             if (not has_wifi() and count >= (WIFI_DELAY * 60)):
                 count = 0
                 connect_wifi()
+                if (has_wifi()): clock.sync()
             if (count % UPDATE_THRESHOLD == 0):
                 # only reset count if there is a wifi connection
-                if has_wifi(): count = 0
+                if (has_wifi()): count = 0
                 reading = build_data(clock.date, clock.time)
                 display(reading)
                 print("---------------------------------")

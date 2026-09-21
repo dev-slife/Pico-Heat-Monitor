@@ -9,7 +9,7 @@ Description: Monitors the Temperature and Humidity Levels of a room.
 # ---------------------- IMPORT MODULES ---------------------- #
 
 from machine import Pin, I2C
-from modules.picotime import *
+from modules.ntptime import *
 from modules.picodata import *
 from modules.piconet import http_send, connect_wifi, has_wifi
 from modules.config import (
@@ -90,7 +90,7 @@ def show_screen(data: OrderedDict, curTime: str):
         dateRecorded = "Unknown"
 
     buffer = [
-        f"F: {data["Temperature"]} H: {data["Humidity"]}%",
+        # f"F: {data["Temperature"]} H: {data["Humidity"]}%",
         f"Date: {dateRecorded}",
         f"Time: {curTime if (curTime) else "Unknown"}"
     ]
@@ -184,21 +184,22 @@ def display(data: dict):
 
 
 # ------------------------- MAIN CODE ------------------------- #
-
-def monitor(clock=PicoClock(), count=UPDATE_THRESHOLD):
+def monitor(clock=None, count=UPDATE_THRESHOLD):
+    if clock is None:
+        clock = piClock()
     while True:
         try:
             if (not has_wifi() and count >= (WIFI_DELAY * 60)):
                 count = 0
                 connect_wifi()
-                if (has_wifi()): clock.sync()
+                if (has_wifi()): clock.setRtcFromNtpTime()
             if (count % UPDATE_THRESHOLD == 0):
                 # only reset count if there is a wifi connection
                 if (has_wifi()): count = 0
                 reading = build_data(clock.date, clock.time)
                 display(reading)
                 print("---------------------------------")
-                if (isTimeToReport(clock.time)):
+                if (clock.isTimeToReport()):
                     csv_append(reading)
                     serializedData = serializeCSV()
                     linesToRemove = []
@@ -208,9 +209,7 @@ def monitor(clock=PicoClock(), count=UPDATE_THRESHOLD):
                             if http_send(payload[0]): linesToRemove.append(payload[1])
                         if (linesToRemove):
                             csv_remove(tuple(linesToRemove))
-                    clock.sync()
             show_screen(reading, clock.time)
-            clock.inc_time('s', CLOCK_SPEED)
             count += CLOCK_SPEED
             sleep(CLOCK_SPEED)
         except Exception as e:
@@ -223,15 +222,18 @@ def screenLog(text):
     OLED.text(text,0,0,1)
     OLED.show()
     sleep(2)
+    OLED.fill(0)
 
   
 
 
 def main():
-    screenLog("Connecting to wifi")
+    print('main')
+    screenLog("Connecting\nto wifi")
     connect_wifi()
-    screenLog(f"has_wifi = {has_wifi()}")
-    clock=PicoClock()
+    screenLog(f"wifi = {has_wifi()}")
+    print(f"wifi = {has_wifi()}")
+    clock=piClock()
     screenLog(f"time is {clock.time}")
     monitor(clock)
 

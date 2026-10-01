@@ -1,9 +1,15 @@
 """
 Author: dev.slife
 Date Created: 2/19/26
-Date Updated: 6/17/26
+Date Updated: 10/1/26
 Description: Holds configuration values for Pico Heat Monitor.
 """
+
+# ------------------------- IMPORT MODULES ------------------------- #
+
+import confsec
+
+
 
 # ------------------------- HARDWARE CONFIG ------------------------- #
 
@@ -18,7 +24,7 @@ HUM_OFFSET = 8
 
 # ------------------------- DEVICE INFO ------------------------- #
 
-PICO_NAME = "Pico<#1>"
+PICO_NAME = confsec.HOSTNAME
 PICO_ROOM = "Unassigned"
 
 
@@ -32,25 +38,11 @@ OLED_SCL_PIN = 7
 
 # ------------------------- NETWORK CONFIG ------------------------- #
 
-WIFI_SSID = ""
-WIFI_PASSWORD = ""
+WIFI_SSID = confsec.WSSID
+WIFI_PASSWORD = confsec.WPASSWD
 CSV_FILE = "PICO_DATA.csv"
-SERVER_URL = ""
-FORM_MAP = {
-    "Unique ID": "",
-    "Assigned Room": "",
-    "Time Recorded": "",
-    "Date Recorded": "",
-    "Hour Recorded": "",
-    "Minute Recorded": "",
-    "Year Recorded": "",
-    "Month Recorded": "",
-    "Day Recorded": "",
-    "Raw Temperature": "",
-    "Temperature": "",
-    "Raw Humidity": "",
-    "Humidity": ""
-}
+SERVER_URL = confsec.API_QUERY
+FORM_MAP = confsec.API_MAP
 
 REPORTING_TIMES = [
     "08:00:00", # 8:00am

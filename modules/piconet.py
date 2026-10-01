@@ -145,23 +145,3 @@ def http_send(payload: dict, max_attempts=TIMEOUT_THRESHOLD):
                 err_reasons.add(f"{type(e).__name__}: {e}")
         print(f"Failed to POST, Given Errors: [{", ".join(err_reasons)}]")
     return False
-
-
-def http_request(max_attempts=TIMEOUT_THRESHOLD):
-    """
-    Sends an HTTP GET request to timeapi.io for grabbing timezone data.
-    
-    Args:
-        max_attempts (int) - the amount of attempts it uses to GET
-    """
-    if (has_wifi()):
-        err_reasons = set()
-        for i in range(max_attempts):
-            try:
-                response = urequests.get(TIME_SERVER, timeout=TIMEOUT_DELAY)
-                print(f"HTTP Status: {response.status_code}")
-                return response.json()
-            except Exception as e:
-                err_reasons.add(f"{type(e).__name__}: {e}")
-        print(f"Failed to GET, Given Errors: [{", ".join(err_reasons)}]")
-    return False

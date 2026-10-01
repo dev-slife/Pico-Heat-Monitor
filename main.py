@@ -8,8 +8,8 @@ Description: Monitors the Temperature and Humidity Levels of a room.
 
 # ---------------------- IMPORT MODULES ---------------------- #
 
-from machine import Pin, I2C
-from modules.picotime import *
+from machine import Pin, I2C, reset
+from modules.ntptime import *
 from modules.picodata import *
 from modules.piconet import http_send, connect_wifi, has_wifi
 from modules.config import (
@@ -25,7 +25,7 @@ from modules.config import (
     TEMP_OFFSET,
     HUM_OFFSET
 )
-from time import sleep
+from time import sleep, ticks_ms, ticks_diff
 import modules.BME280 as BME280
 from modules.ssd1306 import SSD1306_I2C
 
@@ -44,6 +44,9 @@ OLED = SSD1306_I2C(WIDTH, HEIGHT, I2C_OLED)
 
 # BME280 sensor
 BME = BME280.BME280(i2c=I2C_SENSOR)
+
+# Restart the Pico if no data has been recorded to the form for this many hours
+RESET_THRESHOLD = 36
 
 
 
@@ -90,7 +93,7 @@ def show_screen(data: OrderedDict, curTime: str):
         dateRecorded = "Unknown"
 
     buffer = [
-        f"F: {data["Temperature"]} H: {data["Humidity"]}%",
+        # f"F: {data["Temperature"]} H: {data["Humidity"]}%",
         f"Date: {dateRecorded}",
         f"Time: {curTime if (curTime) else "Unknown"}"
     ]
@@ -184,33 +187,39 @@ def display(data: dict):
 
 
 # ------------------------- MAIN CODE ------------------------- #
-
-def monitor(clock=PicoClock(), count=UPDATE_THRESHOLD):
+def monitor(clock=None, count=UPDATE_THRESHOLD):
+    if clock is None:
+        clock = piClock()
+    lastSuccess = ticks_ms()
     while True:
+        # restart if unable to connect to wifi or record data for too long
+        if (ticks_diff(ticks_ms(), lastSuccess) >= RESET_THRESHOLD * 3600 * 1000):
+            print(f"No data recorded in {RESET_THRESHOLD} hours, restarting...")
+            reset()
         try:
             if (not has_wifi() and count >= (WIFI_DELAY * 60)):
                 count = 0
                 connect_wifi()
-                if (has_wifi()): clock.sync()
+                if (has_wifi()): clock.setRtcFromNtpTime()
             if (count % UPDATE_THRESHOLD == 0):
                 # only reset count if there is a wifi connection
                 if (has_wifi()): count = 0
                 reading = build_data(clock.date, clock.time)
                 display(reading)
                 print("---------------------------------")
-                if (isTimeToReport(clock.time)):
+                if (clock.isTimeToReport()):
                     csv_append(reading)
                     serializedData = serializeCSV()
                     linesToRemove = []
                     if (serializedData):
                         for payload in serializedData:
                             # successful POSTS means we can remove local data
-                            if http_send(payload[0]): linesToRemove.append(payload[1])
+                            if http_send(payload[0]):
+                                linesToRemove.append(payload[1])
+                                lastSuccess = ticks_ms()
                         if (linesToRemove):
                             csv_remove(tuple(linesToRemove))
-                    clock.sync()
             show_screen(reading, clock.time)
-            clock.inc_time('s', CLOCK_SPEED)
             count += CLOCK_SPEED
             sleep(CLOCK_SPEED)
         except Exception as e:
@@ -223,15 +232,18 @@ def screenLog(text):
     OLED.text(text,0,0,1)
     OLED.show()
     sleep(2)
+    OLED.fill(0)
 
   
 
 
 def main():
-    screenLog("Connecting to wifi")
+    print('main')
+    screenLog("Connecting\nto wifi")
     connect_wifi()
-    screenLog(f"has_wifi = {has_wifi()}")
-    clock=PicoClock()
+    screenLog(f"wifi = {has_wifi()}")
+    print(f"wifi = {has_wifi()}")
+    clock=piClock()
     screenLog(f"time is {clock.time}")
     monitor(clock)
 

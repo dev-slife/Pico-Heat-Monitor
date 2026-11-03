@@ -1,7 +1,8 @@
 """
 Author: dev.slife
+Contributors: Chris Hawley
 Date Created: 2/19/26
-Date Updated: 5/14/26
+Date Updated: 11/3/26
 Description: Connects to the network and manages HTTP requests using REST.
 """
 

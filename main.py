@@ -1,14 +1,14 @@
 """
 Author: dev.slife
+Contributors: Chris Hawley
 Date Created: 2/18/26
-Date Updated: 6/17/26
+Date Updated: 11/3/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
 
 # ---------------------- IMPORT MODULES ---------------------- #
 
-from machine import Pin, I2C, reset, reset_cause
 import machine
 from modules.ntptime import *
 from modules.picodata import *
@@ -27,7 +27,7 @@ from modules.config import (
     TEMP_OFFSET,
     HUM_OFFSET
 )
-from time import sleep, ticks_ms, ticks_diff
+import time
 import modules.BME280 as BME280
 from modules.ssd1306 import SSD1306_I2C
 
@@ -35,9 +35,9 @@ from modules.ssd1306 import SSD1306_I2C
 # ---------------------- INITIALIZATION ---------------------- #
 
 # I2C communication.
-I2C_SENSOR = I2C(0, sda=Pin(BME_SDA_PIN), scl=Pin(BME_SCL_PIN), freq=400000)
+I2C_SENSOR = machine.I2C(0, sda=machine.Pin(BME_SDA_PIN), scl=machine.Pin(BME_SCL_PIN), freq=400000)
 # I2C1 for OLED on GP6/GP7
-I2C_OLED = I2C(1, sda=Pin(OLED_SDA_PIN), scl=Pin(OLED_SCL_PIN), freq=400000)
+I2C_OLED = machine.I2C(1, sda=machine.Pin(OLED_SDA_PIN), scl=machine.Pin(OLED_SCL_PIN), freq=400000)
 
 # OLED 128x32 init on I2C1
 WIDTH = 128
@@ -192,12 +192,12 @@ def display(data: dict):
 def monitor(clock=None, count=UPDATE_THRESHOLD):
     if clock is None:
         clock = piClock()
-    lastSuccess = ticks_ms()
+    lastSuccess = time.ticks_ms()
     while True:
         # restart if unable to connect to wifi or record data for too long
-        if (ticks_diff(ticks_ms(), lastSuccess) >= RESET_THRESHOLD * 3600 * 1000):
+        if (time.ticks_diff(time.ticks_ms(), lastSuccess) >= RESET_THRESHOLD * 3600 * 1000):
             log_error(f"No data recorded in {RESET_THRESHOLD} hours, restarting...")
-            reset()
+            machine.reset()
         try:
             if (not has_wifi() and count >= (WIFI_DELAY * 60)):
                 count = 0
@@ -225,7 +225,7 @@ def monitor(clock=None, count=UPDATE_THRESHOLD):
                             # successful POSTS means we can remove local data
                             if http_send(payload[0], include_time=isQueued):
                                 linesToRemove.append(payload[1])
-                                lastSuccess = ticks_ms()
+                                lastSuccess = time.ticks_ms()
                             else:
                                 # keep the rest queued for the next report rather than
                                 # spending every attempt on a connection that is failing
@@ -234,17 +234,17 @@ def monitor(clock=None, count=UPDATE_THRESHOLD):
                             csv_remove(tuple(linesToRemove))
             show_screen(reading, clock.time)
             count += CLOCK_SPEED
-            sleep(CLOCK_SPEED)
+            time.sleep(CLOCK_SPEED)
         except Exception as e:
             log_error(f"A(n) {type(e).__name__} has occurred: {e}.")
-            sleep(WIFI_DELAY * 60)
+            time.sleep(WIFI_DELAY * 60)
 
 
 def screenLog(text):
     OLED.fill(0)
     OLED.text(text,0,0,1)
     OLED.show()
-    sleep(2)
+    time.sleep(2)
     OLED.fill(0)
 
   
@@ -252,7 +252,7 @@ def screenLog(text):
 
 def boot_reason() -> str:
     """Names the cause of the last reset, e.g. power on or watchdog."""
-    cause = reset_cause()
+    cause = machine.reset_cause()
     for name in ("PWRON_RESET", "HARD_RESET", "WDT_RESET", "DEEPSLEEP_RESET", "SOFT_RESET"):
         if (cause == getattr(machine, name, None)):
             return name

@@ -1,5 +1,12 @@
+"""
+Author: Chris Hawley
+Date Created: 9/18/26
+Date Updated: 11/3/26
+Description: Keeps the Pico's clock synced via NTP and decides when to report. Based on MicroPython's ntptime module.
+"""
+
+
 import time
-from time import gmtime
 import socket
 import struct
 import machine
@@ -67,7 +74,7 @@ class piClock:
 
         # Convert timestamp from NTP format to our internal format
 
-        EPOCH_YEAR = gmtime(0)[0]
+        EPOCH_YEAR = time.gmtime(0)[0]
         if EPOCH_YEAR == 2000:
             # (date(2000, 1, 1) - date(1900, 1, 1)).days * 24*60*60
             NTP_DELTA = 3155673600
@@ -189,7 +196,7 @@ class piClock:
         (EST/EDT as appropriate), returning a tuple in the same 8-field
         gmtime format: (year, mon, mday, hour, min, sec, wday, yday).
         """
-        tm = gmtime(t)
+        tm = time.gmtime(t)
         year, mon, mday, hour, minute, sec, wday = tm[0], tm[1], tm[2], tm[3], tm[4], tm[5], tm[6]
 
         offset_hours = -4 if self._is_dst(year, mon, mday, hour, minute) else -5

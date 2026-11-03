@@ -1,7 +1,7 @@
 """
 Author: Chris Hawley
 Date Created: 10/26/26
-Date Updated: 10/26/26
+Date Updated: 11/3/26
 Description: Keeps a persistent, size-capped error log on the Pico's flash.
 """
 
@@ -10,6 +10,7 @@ Description: Keeps a persistent, size-capped error log on the Pico's flash.
 
 import os
 import time
+from .picodata import file_exists
 
 
 # ------------------------ CONSTANTS ------------------------ #
@@ -48,15 +49,10 @@ def log_error(message: str):
     """
     print(message)
     try:
-        try:
-            if (os.stat(ERROR_LOG)[6] >= MAX_LOG_BYTES):
-                try:
-                    os.remove(OLD_ERROR_LOG)
-                except OSError:
-                    pass
-                os.rename(ERROR_LOG, OLD_ERROR_LOG)
-        except OSError:
-            pass
+        if (file_exists(ERROR_LOG) and os.stat(ERROR_LOG)[6] >= MAX_LOG_BYTES):
+            if (file_exists(OLD_ERROR_LOG)):
+                os.remove(OLD_ERROR_LOG)
+            os.rename(ERROR_LOG, OLD_ERROR_LOG)
         with open(ERROR_LOG, mode='a') as file:
             file.write(f"{timestamp()} {message}\n")
     except Exception as e:

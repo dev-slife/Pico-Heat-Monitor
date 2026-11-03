@@ -1,17 +1,19 @@
 """
 Author: dev.slife
+Contributors: Chris Hawley
 Date Created: 2/18/26
-Date Updated: 6/17/26
+Date Updated: 11/3/26
 Description: Monitors the Temperature and Humidity Levels of a room.
 """
 
 
 # ---------------------- IMPORT MODULES ---------------------- #
 
-from machine import Pin, I2C, reset
+import machine
 from modules.ntptime import *
 from modules.picodata import *
 from modules.piconet import http_send, connect_wifi, has_wifi
+from modules.errlog import log_error
 from modules.config import (
     CLOCK_SPEED,
     UPDATE_THRESHOLD,
@@ -25,7 +27,7 @@ from modules.config import (
     TEMP_OFFSET,
     HUM_OFFSET
 )
-from time import sleep, ticks_ms, ticks_diff
+import time
 import modules.BME280 as BME280
 from modules.ssd1306 import SSD1306_I2C
 
@@ -33,9 +35,9 @@ from modules.ssd1306 import SSD1306_I2C
 # ---------------------- INITIALIZATION ---------------------- #
 
 # I2C communication.
-I2C_SENSOR = I2C(0, sda=Pin(BME_SDA_PIN), scl=Pin(BME_SCL_PIN), freq=400000)
+I2C_SENSOR = machine.I2C(0, sda=machine.Pin(BME_SDA_PIN), scl=machine.Pin(BME_SCL_PIN), freq=400000)
 # I2C1 for OLED on GP6/GP7
-I2C_OLED = I2C(1, sda=Pin(OLED_SDA_PIN), scl=Pin(OLED_SCL_PIN), freq=400000)
+I2C_OLED = machine.I2C(1, sda=machine.Pin(OLED_SDA_PIN), scl=machine.Pin(OLED_SCL_PIN), freq=400000)
 
 # OLED 128x32 init on I2C1
 WIDTH = 128
@@ -190,17 +192,20 @@ def display(data: dict):
 def monitor(clock=None, count=UPDATE_THRESHOLD):
     if clock is None:
         clock = piClock()
-    lastSuccess = ticks_ms()
+    lastSuccess = time.ticks_ms()
     while True:
         # restart if unable to connect to wifi or record data for too long
-        if (ticks_diff(ticks_ms(), lastSuccess) >= RESET_THRESHOLD * 3600 * 1000):
-            print(f"No data recorded in {RESET_THRESHOLD} hours, restarting...")
-            reset()
+        if (time.ticks_diff(time.ticks_ms(), lastSuccess) >= RESET_THRESHOLD * 3600 * 1000):
+            log_error(f"No data recorded in {RESET_THRESHOLD} hours, restarting...")
+            machine.reset()
         try:
             if (not has_wifi() and count >= (WIFI_DELAY * 60)):
                 count = 0
                 connect_wifi()
-                if (has_wifi()): clock.setRtcFromNtpTime()
+                if (has_wifi()): clock.trySync()
+            # retry the clock sync once per reading if it failed on boot or after a reconnect
+            if (has_wifi() and not clock.synced and count % UPDATE_THRESHOLD == 0):
+                clock.trySync()
             if (count % UPDATE_THRESHOLD == 0):
                 # only reset count if there is a wifi connection
                 if (has_wifi()): count = 0
@@ -212,33 +217,52 @@ def monitor(clock=None, count=UPDATE_THRESHOLD):
                     serializedData = serializeCSV()
                     linesToRemove = []
                     if (serializedData):
-                        for payload in serializedData:
+                        for i in range(len(serializedData)):
+                            payload = serializedData[i]
+                            # the last row is the reading just taken; older rows are queued
+                            # and need the time they were recorded sent with them
+                            isQueued = (i < len(serializedData) - 1)
                             # successful POSTS means we can remove local data
-                            if http_send(payload[0]):
+                            if http_send(payload[0], include_time=isQueued):
                                 linesToRemove.append(payload[1])
-                                lastSuccess = ticks_ms()
+                                lastSuccess = time.ticks_ms()
+                            else:
+                                # keep the rest queued for the next report rather than
+                                # spending every attempt on a connection that is failing
+                                break
                         if (linesToRemove):
                             csv_remove(tuple(linesToRemove))
             show_screen(reading, clock.time)
             count += CLOCK_SPEED
-            sleep(CLOCK_SPEED)
+            time.sleep(CLOCK_SPEED)
         except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(f"A(n) {type(e).__name__} has occurred: {e}.  Line {exc_tb.tb_lineno}")
+            log_error(f"A(n) {type(e).__name__} has occurred: {e}.")
+            time.sleep(WIFI_DELAY * 60)
 
 
 def screenLog(text):
     OLED.fill(0)
     OLED.text(text,0,0,1)
     OLED.show()
-    sleep(2)
+    time.sleep(2)
     OLED.fill(0)
 
   
 
 
+def boot_reason() -> str:
+    """Names the cause of the last reset, e.g. power on or watchdog."""
+    cause = machine.reset_cause()
+    for name in ("PWRON_RESET", "HARD_RESET", "WDT_RESET", "DEEPSLEEP_RESET", "SOFT_RESET"):
+        if (cause == getattr(machine, name, None)):
+            return name
+    return str(cause)
+
+
 def main():
     print('main')
+    # the clock isn't synced yet, so this entry is timestamped from the RTC's default date
+    log_error(f"Booted, reset cause: {boot_reason()}")
     screenLog("Connecting\nto wifi")
     connect_wifi()
     screenLog(f"wifi = {has_wifi()}")

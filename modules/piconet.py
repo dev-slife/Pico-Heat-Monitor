@@ -2,7 +2,7 @@
 Author: dev.slife
 Contributors: Chris Hawley
 Date Created: 2/19/26
-Date Updated: 11/3/26
+Date Updated: 11/12/26
 Description: Connects to the network and manages HTTP requests using REST.
 """
 
@@ -28,7 +28,6 @@ from .config import (
 
 # ------------------------ CONSTANTS ------------------------ #
 
-TIME_SERVER = "https://timeapi.io/api/v1/time/current/zone?timezone=America%2FNew_York"
 # A POST takes about 1s. With a 1s timeout, timed out attempts leaked memory until the next
 # reset, so every later POST failed with ENOMEM; timeouts at 10s haven't shown that.
 HTTP_TIMEOUT = 10

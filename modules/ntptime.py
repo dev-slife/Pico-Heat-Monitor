@@ -1,7 +1,8 @@
 """
 Author: Chris Hawley
+Contributors: dev.slife
 Date Created: 9/18/26
-Date Updated: 11/3/26
+Date Updated: 11/16/26
 Description: Keeps the Pico's clock synced via NTP and decides when to report. Based on MicroPython's ntptime module.
 """
 
@@ -11,6 +12,7 @@ import socket
 import struct
 import machine
 from .errlog import log_error
+from .piconet import grab_MAC
 
 from .config import REPORTING_TIMES
 
@@ -34,6 +36,62 @@ class piClock:
         self.lastReport = None
         # don't crash on boot if there is no network; monitor() retries the sync later
         self.trySync()
+        
+        
+    # ----------------------- PRIVATE METHODS ----------------------- #
+
+    #functions below are helpers to convert UTC to eastern time, taking daylight savings into account.
+    # https://www.geeksforgeeks.org/dsa/tomohiko-sakamotos-algorithm-finding-day-week/
+    def _sakamoto_dow(self, year, month, day):
+        """Day of week for Y/M/D. Returns 0=Sunday .. 6=Saturday."""
+        t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
+        y = year
+        if month < 3:
+            y -= 1
+        return (y + y // 4 - y // 100 + y // 400 + t[month - 1] + day) % 7
+
+    def _nth_sunday(self, year, month, n):
+        """Day-of-month of the nth Sunday in a given month/year."""
+        dow0 = self._sakamoto_dow(year, month, 1)          # weekday of the 1st
+        first_sunday = 1 if dow0 == 0 else 1 + (7 - dow0)
+        return first_sunday + (n - 1) * 7
+
+    def _is_dst(self, year, mon, mday, hour, minute):
+        """
+        US DST rule: 2nd Sunday in March 2:00 AM local -> 3:00 AM local (spring forward)
+        1st Sunday in November 2:00 AM local -> 1:00 AM local (fall back)
+        Expressed here in UTC-equivalent cutover times:
+        spring cutover = 07:00 UTC (2:00 AM EST) on 2nd Sunday of March
+        fall cutover   = 06:00 UTC (2:00 AM EDT) on 1st Sunday of November
+        """
+        march_day = self._nth_sunday(year, 3, 2)
+        nov_day = self._nth_sunday(year, 11, 1)
+
+        spring = (year, 3, march_day, 7, 0)
+        fall = (year, 11, nov_day, 6, 0)
+        now = (year, mon, mday, hour, minute)
+
+        return spring <= now < fall
+
+
+    # ----------------------- PUBLIC METHODS ----------------------- #
+
+    def utc_to_eastern(self, t):
+        """
+        Convert a gmtime()-style timestamp (UTC) to US Eastern local time
+        (EST/EDT as appropriate), returning a tuple in the same 8-field
+        gmtime format: (year, mon, mday, hour, min, sec, wday, yday).
+        """
+        tm = time.gmtime(t)
+        year, mon, mday, hour, minute, sec, wday = tm[0], tm[1], tm[2], tm[3], tm[4], tm[5], tm[6]
+
+        offset_hours = -4 if self._is_dst(year, mon, mday, hour, minute) else -5
+
+        # Use mktime/gmtime purely as an arithmetic tool - the epoch reference
+        # (1970 vs 2000) cancels out since we go in and back out the same way.
+        epoch = time.mktime((year, mon, mday, hour, minute, sec, wday, 0))
+        epoch += offset_hours * 3600
+        return time.gmtime(epoch)
 
 
     def queryNTPTime(self):
@@ -87,7 +145,6 @@ class piClock:
         return val - NTP_DELTA
 
 
-
     def setRtcFromNtpTime(self):
         # There's currently no timezone support in MicroPython, and the RTC is set in UTC time.  Offset by #of hours in timezone difference.
         t = self.queryNTPTime()
@@ -130,7 +187,6 @@ class piClock:
         dt = self.getRtcTime()
         return "{:02d}:{:02d}:{:02d}".format(dt[3], dt[4], dt[5])
 
-    # ----------------------- REPORTING TIME ----------------------- #
 
     def isTimeToReport(self) -> bool:
         """
@@ -146,63 +202,12 @@ class piClock:
 
         for reporttime in REPORTING_TIMES:
             rt_h, rt_m, _, = map(int, reporttime.split(":"))
-            start = rt_h * 60 + rt_m
+            # Create an offset to prevent Picos from reporting at the same time, causing congestion in traffic
+            offset = int(grab_MAC().split(":")[-1], 16)
+            start = (rt_h * 60 + rt_m) + offset
             slot = (today, reporttime)
-            if start <= now < start + self.report_window and self.lastReport != slot:
+            if ((start <= now < (start + self.report_window)) and (self.lastReport != slot)):
                 self.lastReport = slot
                 return True
 
         return False
-
-
-
-
-    #functions below are helpers to convert UTC to eastern time, taking daylight savings into account.
-    # https://www.geeksforgeeks.org/dsa/tomohiko-sakamotos-algorithm-finding-day-week/
-    def _sakamoto_dow(self, year, month, day):
-        """Day of week for Y/M/D. Returns 0=Sunday .. 6=Saturday."""
-        t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
-        y = year
-        if month < 3:
-            y -= 1
-        return (y + y // 4 - y // 100 + y // 400 + t[month - 1] + day) % 7
-
-    def _nth_sunday(self, year, month, n):
-        """Day-of-month of the nth Sunday in a given month/year."""
-        dow0 = self._sakamoto_dow(year, month, 1)          # weekday of the 1st
-        first_sunday = 1 if dow0 == 0 else 1 + (7 - dow0)
-        return first_sunday + (n - 1) * 7
-
-    def _is_dst(self, year, mon, mday, hour, minute):
-        """
-        US DST rule: 2nd Sunday in March 2:00 AM local -> 3:00 AM local (spring forward)
-        1st Sunday in November 2:00 AM local -> 1:00 AM local (fall back)
-        Expressed here in UTC-equivalent cutover times:
-        spring cutover = 07:00 UTC (2:00 AM EST) on 2nd Sunday of March
-        fall cutover   = 06:00 UTC (2:00 AM EDT) on 1st Sunday of November
-        """
-        march_day = self._nth_sunday(year, 3, 2)
-        nov_day = self._nth_sunday(year, 11, 1)
-
-        spring = (year, 3, march_day, 7, 0)
-        fall = (year, 11, nov_day, 6, 0)
-        now = (year, mon, mday, hour, minute)
-
-        return spring <= now < fall
-
-    def utc_to_eastern(self, t):
-        """
-        Convert a gmtime()-style timestamp (UTC) to US Eastern local time
-        (EST/EDT as appropriate), returning a tuple in the same 8-field
-        gmtime format: (year, mon, mday, hour, min, sec, wday, yday).
-        """
-        tm = time.gmtime(t)
-        year, mon, mday, hour, minute, sec, wday = tm[0], tm[1], tm[2], tm[3], tm[4], tm[5], tm[6]
-
-        offset_hours = -4 if self._is_dst(year, mon, mday, hour, minute) else -5
-
-        # Use mktime/gmtime purely as an arithmetic tool - the epoch reference
-        # (1970 vs 2000) cancels out since we go in and back out the same way.
-        epoch = time.mktime((year, mon, mday, hour, minute, sec, wday, 0))
-        epoch += offset_hours * 3600
-        return time.gmtime(epoch)

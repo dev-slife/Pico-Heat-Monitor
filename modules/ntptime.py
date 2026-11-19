@@ -2,7 +2,7 @@
 Author: Chris Hawley
 Contributors: dev.slife
 Date Created: 9/18/26
-Date Updated: 11/16/26
+Date Updated: 11/18/26
 Description: Keeps the Pico's clock synced via NTP and decides when to report. Based on MicroPython's ntptime module.
 """
 
@@ -203,7 +203,7 @@ class piClock:
         for reporttime in REPORTING_TIMES:
             rt_h, rt_m, _, = map(int, reporttime.split(":"))
             # Create an offset to prevent Picos from reporting at the same time, causing congestion in traffic
-            offset = int(grab_MAC().split(":")[-1], 16)
+            offset = (int(grab_MAC().split(":")[-1], 16) / 60)
             start = (rt_h * 60 + rt_m) + offset
             slot = (today, reporttime)
             if ((start <= now < (start + self.report_window)) and (self.lastReport != slot)):
